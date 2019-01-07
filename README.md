@@ -25,7 +25,7 @@ n-gram models are smoothed using add-k smoothing. Classification Language models
    2. Unseeded sentence generation where no words are given, sentences are generated from scratch. 
    Examples of unseeded generation for 4 ngram models are given below:
     
-![IAMGE1](images/ngram.png)
+![IAMGE1](img/ngram.png)
 
 <p align="center">
 <b>Unseeded sentence generate on language models</b><br>
