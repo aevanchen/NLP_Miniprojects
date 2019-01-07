@@ -18,7 +18,7 @@ n-gram models are smoothed using add-k smoothing. Classification Language models
 
 
 ## Random sentence generation with unsmoothed ngram
-   Each generated sentence start with a "<S>" token and end with "<//S>" token.
+   Each generated sentence start with a "<S>" token and end with "</S>" token.
    
    For the evaluations, there are basically two tasks: 
    1. Seeded sentence generation where the several words in the start of sentences are predefined 
