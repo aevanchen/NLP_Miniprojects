@@ -1,0 +1,294 @@
+#part 2： analogy
+import numpy as np
+import pandas as pd
+import re
+def read_embedding(filename):
+    embed = {}
+    for line in open(filename,encoding='utf8'):
+        line = line.strip().split()
+        if (len(line)!=301):
+            continue
+        try:
+            embed[(line[0])] = np.array(list(map(float, line[1:])))
+        except:
+            pass
+    print('[%s]\n\tEmbedding size: %d' % (filename, len(embed)), end='\n')
+    return embed
+def preprocessfile(filename):
+    train_set=[]
+    train_label=[]
+    f=open(filename,'r',encoding="utf8")
+    for line in f:
+        line=line.strip()
+        line=re.sub('[\t\n]', '',line)
+        set=line.split(" ")
+
+        train_set.append(set[0:3])
+        train_label.append(set[-1])
+    return np.array(train_set),np.array(train_label)
+
+
+def mapembedding(train_file,embeded_dict):
+    oov=[]
+    result=[]
+    a=1
+    for i in range (len(train_file)):
+          a=1
+          c=[]
+          for j in train_file[i]:
+           
+                try:
+                    e=embed[j]
+
+                except:
+                    try:
+                        e=embed[j.lower()]
+                        
+                    except:
+                        oov.append(i)
+                        a=0
+                        continue
+             
+                c.append(e)
+          if(a!=0):
+                result.append(c)
+        
+    result =np.array(result)
+        
+    return result 
+def processembedding(embed):
+    result=[]
+    for i in range(len(embed)):
+        a=0
+        a=-embed[i][0]+embed[i][1]+embed[i][2]
+        result.append(a)
+    return np.array(result)
+
+def createvocab(embed_dict):
+    vocab=np.array(list(embed_dict.keys()))
+    vocab_dict={}
+    for i,w in enumerate(vocab):
+        vocab_dict[w]=i
+    return vocab,vocab_dict
+
+def createvocab_dict(vocab):
+    vocab_dict={}
+    for i,w in enumerate(vocab):
+        vocab_dict[w]=i
+    return vocab_dict
+
+def createnumpyembedding(embed_dict):
+    return np.array(list(embed_dict.values()))
+#print(x_train.shape)
+
+def findacc(truth,preds):
+     
+     acc=np.sum(truth==preds)/len(truth)
+     return acc
+def cosineimilarity(e,v):
+  
+    #Input:
+    #e = nxd input matrix with n row-vectors of dimensionality d (n is number of dictionary_keys)
+    #v = mxd input matrix with m row-vectors of dimensionality d (m is number of test samples)
+    # Output:
+    # Matrix D of size nxm
+    # s(i,j) is the cosinesimiarlity of embed(i,:) and test(j,:)
+    g=e.dot(v.T)
+    b=np.expand_dims(np.linalg.norm(e,axis=1),1)
+    a=np.expand_dims(np.linalg.norm(v,axis=1),1)
+    s=np.divide(g,np.multiply(b,a.T))
+    # ... until here
+    return s
+
+
+def findknn(D,k):
+    """
+   # D=cos_distance matrix
+   # k = number of nearest neighbors to be found
+    
+   # Output:
+   # indices = kxm matrix, where indices(i,j) is the i^th nearest neighbor of xTe(j,:)
+   # dists = Euclidean distances to the respective nearest neighbors
+    """
+
+    m = D.shape[1]
+    ind = np.argsort(D, axis=0)
+    indices = ind[-k:]
+    r = np.array([_ for _ in range(m)], dtype=np.int)
+    r = np.array([r] * k)
+    
+    dists = D[indices, r]
+
+    return indices, dists
+def vocab_third_col(x):
+    third_col=x[:,-1]
+    third_col_y=[]
+    for e in third_col:
+        try:
+            t=vocab_dict[e]
+        except:
+            try:
+                t=vocab_dict[e.lower()]
+            except:
+                continue
+        third_col_y.append(t)
+    third_col_y=np.array(third_col_y)
+    return third_col_y  
+
+#a is the result of nn classifer, b is the third_colmn vocab_index
+def modify(a,b):
+    d=np.ones((1,a.shape[1]),dtype=int)
+    for i in range (a.shape[1]):
+        if b[i]!=a[-1][i]:
+            d[0][i]=a[-1][i]
+        else:
+            d[0][i]=a[-2][i]
+
+    return d
+
+
+
+
+x,y=preprocessfile(filename)
+vocab=set(x.flatten())|set(y)
+print("vocab_size:"+str(len(vocab)))
+
+
+#load this file to create vocab
+#embed_file="D:/glove.6B.300d.txt"
+#embed=read_embedding(embed_file)
+#vocab,vocab_dict=createvocab(embed)
+#vocab=set(vocab)|set(x.flatten())|set(y)
+#print("vocab_size:"+str(len(vocab)))
+
+
+#the load the embedding file which is 840B the large dataset
+embed_file="D:/word_embedding/glove.840B.300d.txt"
+embed=read_embedding(embed_file)
+print("finish loading embedding file")
+
+
+#create the 840B vesion of embedding based on the customized vocab
+customized_dict={}
+for v in vocab:
+    try:
+        customized_dict[v]=embed[v]
+    except:
+        #aslo we should consider decapitalized vocab
+        try: 
+            customized_dict[v.title()]=embed[v.title()]
+        except:     
+            pass
+
+vocab,vocab_dict=createvocab(customized_dict)
+
+embeddings=createnumpyembedding(customized_dict)
+print("done")
+
+
+x_train=processembedding(mapembedding(x,customized_dict))
+
+#this is for convinientence of testing we save the vocab and embedding file locally
+#np.save("840B_glove_vocab.npy",vocab)
+#np.save("840B_glove_embeddings.npy",embeddings)
+
+#uncomment below to load them 
+#vocab=np.load("840B_glove_vocab.npy")
+#embeddings=np.load("840B_glove_embeddings.npy")
+#vocab_dict=createvocab_dict(vocab)
+#customized_dict={}
+#for i,v in enumerate(vocab):
+ #       customized_dict[v]=embeddings[i]
+    
+
+#this is for convinientence of testing we save the vocab and embedding file locally
+#np.save("840B_glove_vocab.npy",vocab)
+#np.save("840B_glove_embeddings.npy",embeddings)
+
+#uncomment below to load them 
+#vocab=np.load("840B_glove_vocab.npy")
+#embeddings=np.load("840B_glove_embeddings.npy")
+#vocab_dict=createvocab_dict(vocab)
+#customized_dict={}
+#for i,v in enumerate(vocab):
+ #       customized_dict[v]=embeddings[i]
+    
+
+correct=truth[truth==preds1]
+correct_i=np.argwhere(truth==preds1).flatten()
+false=preds1[truth!=preds1]
+false_i=np.where([truth!=preds1])[1]
+def randomdisplay(x,y,vocab,vocab_index,data_index,n):
+    n_samples_for_display=n
+    a=np.random.choice(len(correct),n_samples_for_display,replace=False)
+    if(y[data_index[a[0]]]==vocab[vocab_index[a[0]]]):
+        status="correct"
+    else:
+        status="incorrect"
+    for i in range (n_samples_for_display):
+        print("data:{:40s}".format((str(x[data_index[a[i]]]))) +"label:{:20s}".format((y[data_index[a[i]]]))
+              +"pred:{:20s}".format(vocab[vocab_index[a[i]]])+"result: %s"%(status))
+        print()
+        
+print("10 correct examples:")
+randomdisplay(x,y,vocab,correct,correct_i,10)
+
+
+print("10 false examples:")
+randomdisplay(x,y,vocab,false,false_i,10)
+
+
+print("original model acc:")
+print(findacc(truth,preds1))
+print("modified model acc:")
+print(findacc(truth,preds2))
+
+word1='small'
+word2='big'
+word3='short'
+print("customized analogy pair:"+str(word1)+" "+ str(word2)+" "+str(word3))
+xx=-embed[word1]+embed[word2]+embed[word3]
+xx=np.expand_dims(xx,0)
+s=cosineimilarity(embeddings,xx)
+pred,dist= findknn(s,1)
+print("prediction:")
+print(vocab[pred][0][0])
+
+print()
+word1='like'
+word2='fancy'
+word3='dislike'
+print("customized analogy pair:"+str(word1)+" "+ str(word2)+" "+str(word3))
+xx=-embed[word1]+embed[word2]+embed[word3]
+xx=np.expand_dims(xx,0)
+s=cosineimilarity(embeddings,xx)
+pred,dist= findknn(s,1)
+print("prediction:")
+print(vocab[pred][0][0])
+
+word='enter'
+print("find 10 nearest neigbour of a word"+str(word))
+xx=embed[word]
+xx=np.expand_dims(xx,0)
+s=cosineimilarity(embeddings,xx)
+pred,dist= findknn(s,11)
+print("prediction:(left to right from most similar to less similar)")
+print(vocab[pred][:-1,:][::-1].flatten())
+
+
+
+word='enter'
+print("find 10 nearest neigbour of a word"+str(word))
+xx=embed[word]
+xx=np.expand_dims(xx,0)
+
+start_time = timeit.default_timer()
+s=cosineimilarity(embeddings,xx)
+pred,dist= findknn(s,2)
+elapsed = timeit.default_timer() - start_time
+print("running time:"+str(elapsed))
+
+print("prediction:(left to right from most similar to less similar)")
+print(vocab[pred][:-1,:][::-1].flatten())
+
+

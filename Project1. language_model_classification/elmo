@@ -1,0 +1,244 @@
+#elmo vector/allennlp
+import allennlp
+from allennlp.modules.elmo import Elmo, batch_to_ids
+import torch
+from nltk import word_tokenize
+import math
+import re
+import numpy as np
+file1_trn="train/obama.txt"
+file2_trn="train/trump.txt"
+file1_dev="development/obama.txt"
+file2_dev="development/trump.txt"
+test_file="test/test.txt"
+
+def preprocess(content):
+ 
+    content = content.strip().strip('\n').strip('\t')
+    content = content.strip().strip('\n').strip('\t')
+    content= re.sub(r" \’ ",r"'",content)
+    content= re.sub(r" \'",r"'",content)
+    content= re.sub(r"\' ",r"'",content)
+    content=re.sub(r" n\’t",r"n't",content)
+    content=re.sub(r"''",r" ",content)
+    #content=re.sub(r"'s",r" is",content)
+    #content=re.sub(r"'re",r" are",content)
+    #content=re.sub(r"'ve",r" have",content)
+    #content=re.sub(r"n't",r"  not",content)
+    #content=re.sub(r"i'm",r"i am",content)
+    #content=re.sub(r"'ll",r" will",content)
+    #content=re.sub(r"'d",r" would",content)
+    content=re.sub(r"[\-\—\…]",r" ",content)
+    
+    
+    content=re.sub(r"\.",r" . ",content)
+    content=re.sub(r"\'",r" ' ",content)
+    content=re.sub(r"\,",r" , ",content)
+    
+    #replace puntuation into period
+    #content=re.sub(r"[/!/?]",r' . ',content)
+    
+    def is_number(text):
+        try:
+            float(text)
+            return True
+        except ValueError:
+            return False
+    def conert_number2string(text):
+
+        t=text.split(" ")
+        c=[ num2words((float)(a)) if is_number(a) else a for a in t ]
+        return " ".join(c)
+    #replace number into word characters
+    #content=conert_number2string(content)
+    #content=re.sub(r"\.",r" . ",content)
+    #content=re.sub(r"\'",r" ' ",content)
+    #content=re.sub(r"\,",r" , ",content)
+    
+    #tokenization with re by space
+
+    return content
+
+    
+options_file = "elmo_2x4096_512_2048cnn_2xhighway_5.5B_options.json"
+weight_file = "elmo_2x4096_512_2048cnn_2xhighway_5.5B_weights.hdf5"
+file1_trn="train/obama.txt"
+file2_trn="train/trump.txt"
+file1_dev="development/obama.txt"
+file2_dev="development/trump.txt"
+test_file="test/test.txt"
+
+#precocess and load file
+f=open(file1_trn,'r',encoding="utf8")
+content1=f.readlines()
+f=open(file1_dev,'r',encoding="utf8")
+content2=f.readlines()
+a=[preprocess(i) for i in content1]
+b=[preprocess(i) for i in content2]
+a=np.expand_dims(a,0)
+b=np.expand_dims(b,0)
+t=np.concatenate((a, b), axis=1)
+trn1=list(t[0])
+#
+f=open(file2_trn,'r',encoding="utf8")
+content1=f.readlines()
+f=open(file2_dev,'r',encoding="utf8")
+content2=f.readlines()
+a=[preprocess(i) for i in content1]
+b=[preprocess(i) for i in content2]
+a=np.expand_dims(a,0)
+b=np.expand_dims(b,0)
+t=np.concatenate((a, b), axis=1)
+trn2=list(t[0])
+
+#tokenization
+obama_tokens=[word_tokenize(i) for i in trn1]
+trump_tokens=[word_tokenize(i) for i in trn2]
+f=open(test_file,'r',encoding="utf8")
+content1=f.readlines()
+a=[preprocess(i) for i in content1]
+a=np.expand_dims(a,0)
+test=list(a[0])
+test_tokens=[word_tokenize(i) for i in test]
+
+def run_elmo(tokens,flag):
+    n_chunk=math.ceil((len(tokens))/100)
+
+    #size=0
+    size=0 (#total number of words in the document)
+
+    for i in range (n_chunk):
+        result=torch.zeros(1024,dtype=torch.double)
+        result1=torch.zeros(1024,dtype=torch.double) #/total number
+        chunk=tokens[i*100:(i+1)*100]
+        for j,seq_tokens in enumerate(chunk):
+              print(i,j)
+              character_ids=batch_to_ids([seq_tokens])
+              t=elmo(character_ids)
+              a=torch.sum(t['mask'],dim=1,dtype=torch.double).unsqueeze(1)
+              size+=t['elmo_representations'][1].size()[1]
+              b=torch.sum(t['elmo_representations'][1],dim=1,dtype=torch.double)
+              result1=torch.add(result1,b.squeeze(0))
+              c=torch.div(b,a).squeeze(0)
+              result=torch.add(result,c)
+        result=result.detach().numpy()
+        result1=result1.detach().numpy()
+        if(flag==1):
+            np.save('elmo/o1_%d.npy'%(i),result)
+            np.save('elmo/o2_%d.npy'%(i),result1)
+        if(flag==1):
+            np.save('elmo/t1_%d.npy'%(i),result)
+            np.save('elmo/t2_%d.npy'%(i),result1)
+        #print(size)
+    print("final:")
+    print(size) #total number of words in the document
+    print('done')
+        
+run_elmo(trump_tokens)
+run_elmo(obama_tokens)
+
+#obain elmo representation of each speech vector by taking average
+a=np.zeros(1024)
+for i in range (0,31):
+    result=np.load("elmo/t1_"+str(n)+'.npy')
+    a+=result
+print(a)
+        
+b=np.zeros(1024)
+for i in range (0,31):
+    result=np.load("elmo/o1_"+str(n)+'.npy')
+    b+=result
+print(a)
+        
+total=0
+results=torch.zeros(1024,dtype=torch.double)
+
+#generate embedding file for text data
+print(n_chunk)
+for i in range (len(test_tokens)):
+        character_ids=batch_to_ids([test_tokens[i]])
+        t=elmo(character_ids)
+        a=torch.sum(t['mask'],dim=1,dtype=torch.double).unsqueeze(1)
+        b=torch.sum(t['elmo_representations'][1],dim=1,dtype=torch.double)
+        c=torch.div(b,a)
+        if(i!=0):
+            c=torch.cat((prev,c),dim=0)     
+        prev=c
+np.save("elmo3/test.npy",c.detach().numpy())
+
+#generate embedding file for development data
+results=torch.zeros(1024,dtype=torch.double)
+x_dev=np.concatenate((obama_tokens[3000:3100],trump_tokens[3000:3100]),axis=0)
+
+for i in range (len(x_dev)):
+        print(i)
+        character_ids=batch_to_ids([x_dev[i]])
+        t=elmo(character_ids)
+        a=torch.sum(t['mask'],dim=1,dtype=torch.double).unsqueeze(1)
+        b=torch.sum(t['elmo_representations'][1],dim=1,dtype=torch.double)
+        c=torch.div(b,a)
+        if(i!=0):
+            c=torch.cat((prev,c),dim=0)     
+        prev=c
+        print(c.size())
+
+results
+np.save("elmo3/dev.npy",c.detach().numpy())        
+        
+        
+trump_embedding=a/3100
+obama_embedding=b/3100
+test_embedding=np.load("elmo3/test.npy")
+        
+obama_embedding=np.expand_dims(obama_embedding,axis=0)
+trump_embedding=np.expand_dims(trump_embedding,axis=0)
+
+
+pred=[]
+Id=[]
+result=[]
+for i in range(200):
+    test=np.expand_dims(test_embedding[i],axis=0)
+
+    #print(line_embedding.shape)
+    prediction=np.argmax([cosineimilarity(obama_embedding,test),cosineimilarity(trump_embedding,test)])
+    result.append((i,prediction))
+    pred.append(prediction)
+        
+labels = ['Id','Prediction']
+df = pd.DataFrame.from_records(result, columns=labels)
+df.to_csv("elmo.csv",index=False,header=True,sep=",")
+print('done')
+        
+        
+#obain elmo representation of each speech vector by taking average
+a=np.zeros(1024)
+for i in range (0,30):
+    result=np.load("elmo3/t1_"+str(i)+'.npy')
+    a+=result
+
+b=np.zeros(1024)
+for i in range (0,30):
+    result=np.load("elmo3/o1_"+str(i)+'.npy')
+    b+=result
+
+trump_embedding=a/3000
+obama_embedding=b/3000
+
+obama_embedding=np.expand_dims(obama_embedding,axis=0)
+trump_embedding=np.expand_dims(trump_embedding,axis=0)
+x_dev=np.load("elmo3/dev.npy")
+
+pred=[]
+Id=[]
+result=[]
+
+for i in range(200):
+    dev=np.expand_dims(x_dev[i],axis=0)
+
+    #print(line_embedding.shape)
+    prediction=np.argmax([cosineimilarity(obama_embedding,dev),cosineimilarity(trump_embedding,dev)])
+    result.append((i,prediction))
+    pred.append(prediction)
+print("elmo vector classficaiton acc:")
+print(findacc(y_dev,pred))

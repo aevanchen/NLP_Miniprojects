@@ -1,0 +1,765 @@
+#XINGYU CHEN XC374,  BYRAN MIN km567
+#preprocessing 
+import sys
+import os
+import numpy as np
+import re
+from num2words import num2words
+from nltk import word_tokenize
+import re
+import pandas as pd
+import math
+from nltk import word_tokenize
+
+
+def preprocess(filename):
+    f=open(filename,'r',encoding="utf8")
+    content=f.readlines()
+    #strip() to delete extra space and  new line symbols
+    content = " ".join(x.strip().strip('\n').strip('\t') for x in content)
+    #re-assemble words like there ' s , they 've, don't,can't into a consitent form 
+    
+    
+
+    content= re.sub(r" \’ ",r"'",content)
+    content= re.sub(r" \'",r"'",content)
+    content= re.sub(r"\' ",r"'",content)
+    content=re.sub(r" n\’t",r"n't",content)
+    
+
+    #replace puntuation into period
+    #content=re.sub(r"[/!/?]",r' . ',content)
+    content=re.sub(r"''",r" ",content)
+    content=re.sub(r"“",r" ",content)
+    content=re.sub(r"`","",content)
+    content=re.sub(r"\.\.\.",r"",content)
+    content=re.sub(r"[\-\—\…]",r" ",content)
+    content=re.sub(r"\[",r"",content)
+    content=re.sub(r"\]",r"",content)
+
+
+    #replace puntuation into period
+    #content=re.sub(r"[/!/?]",r' . ',content)
+
+
+    def is_number(text):
+        try:
+            float(text)
+            return True
+        except ValueError:
+            return False
+    def conert_number2string(text):
+
+        t=text.split(" ")
+        c=[ num2words((float)(a)) if is_number(a) else a for a in t ]
+        return " ".join(c)
+    #replace number into word characters
+    content=conert_number2string(content)
+    
+    content=re.sub(r"\.",r" . ",content)
+    #content=re.sub(r"\'",r" ' ",content)
+    content=re.sub(r"\,",r" , ",content)
+    #add start / end token
+    #content=re.sub(r"\.",r"<s> . </s>",content)
+        #add start / end token
+    content=re.sub(r"\.",r". </s> <s> ",content)
+    content=re.sub(r"\!",r"! </s> <s> ",content)
+    content=re.sub(r"\?",r"? </s> <s> ",content)
+    content='<s> '+ content
+    content=content[:len(content)-4]
+    content=re.sub(r"\.",r" ",content)
+    #tokenization with re by space
+    tokens = re.split(' ', content)
+    tokens= list(filter(None, tokens)) # Remove empty strings
+    return tokens
+
+#this function generates N gram for any N, 98j kj
+#returns total number of ngram
+#returns vocab for the ngram models
+#returns a word_dict for all the seen ngrams
+# returns a sorted probality 
+def generateNgram(tokens,n):
+    ngram = [tuple(tokens[i:i+n]) for i in range(len(tokens)-(n-1))]
+    ngram_count=len(ngram)
+    word_dict = dict()
+    for token in ngram:
+        if token in word_dict.keys():
+            word_dict[token] += 1
+        else:
+            word_dict[token] = 1 
+    
+    word_list_sorted=sorted(word_dict.items(),key=lambda x: (-x[1]))
+    word_dict_sorted=dict(word_list_sorted)
+    return ngram_count,word_dict_sorted,word_list_sorted
+
+
+def loaddata(file):
+    f=open(file,'r',encoding="utf8")
+    content=f.readlines()
+
+    content = " ".join(x.strip().strip('\n').strip('\t') for x in content)
+    return content
+def tokennize(content):
+    
+    content= re.sub(r" \’ ",r"'",content)
+    content= re.sub(r" \'",r"'",content)
+    content= re.sub(r"\' ",r"'",content)
+    content=re.sub(r" n\’t",r"n't",content)
+    
+
+    #replace puntuation into period
+    #content=re.sub(r"[/!/?]",r' . ',content)
+    content=re.sub(r"''",r" ",content)
+    content=re.sub(r"“",r" ",content)
+    content=re.sub(r"`","",content)
+    content=re.sub(r"\.\.\.",r"",content)
+    content=re.sub(r"[\-\—\…]",r" ",content)
+    content=re.sub(r"\[",r"",content)
+    content=re.sub(r"\]",r"",content)
+
+
+    def is_number(text):
+        try:
+            float(text)
+            return True
+        except ValueError:
+            return False
+    def conert_number2string(text):
+
+        t=text.split(" ")
+        c=[ num2words((float)(a)) if is_number(a) else a for a in t ]
+        return " ".join(c)
+    #replace number into word characters
+    content=conert_number2string(content)
+     
+    content=re.sub(r"\.",r".",content)
+    #content=re.sub(r"\'",r" ' ",content)
+    content=re.sub(r"\,",r" , ",content)
+    
+     #add start / end token
+    content=re.sub(r"\.",r". </s> <s> ",content)
+    content=re.sub(r"\!",r"! </s> <s> ",content)
+    content=re.sub(r"\?",r"? </s> <s> ",content)
+    content='<s> '+ content
+    content=content[:len(content)-4]
+    #tokenization with re by space
+    content=re.sub(r"\.",r" ",content)
+    tokens = re.split(' ', content)
+    tokens= list(filter(None, tokens)) # Remove empty strings
+    return tokens
+
+
+
+def wordcount(tokens):
+    word_dict = dict()
+    for token in tokens:
+        if token in word_dict.keys():
+            word_dict[token] += 1
+        else:
+            word_dict[token] = 1 
+    word_list_sorted=dict(sorted(word_dict.items(),key=lambda x: (x[1])))
+
+    return word_list_sorted
+
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+
+
+
+#for obama corpus
+#add unkown token :UNK" to the dictonary
+
+
+def addunkown(dictionary,vocab):
+    count=0
+    keylist=list(dictionary.keys())
+    for k in keylist:
+        if k in vocab:
+            continue
+        else:
+            count+=dictionary[k]
+            del dictionary[k]
+
+    for k in vocab:
+        if k not in list(dictionary.keys()):
+            dictionary[k]=0       
+    dictionary['UNK']=count
+    #start word probabilty is zero 
+    dictionary['<s>']=1.0
+    return dictionary
+
+
+#amp the unknown tokens on corpus 
+def maptoken(dictionary,tokens):
+    for i in range(len(tokens)):
+        try:
+            dictionary[tokens[i]]
+        except:
+            tokens[i]="UNK"
+    return tokens
+
+                                                         
+
+
+#apply smoothing
+import math
+def UnigramProbAdd1(n_vocab,vocab_dict,k):
+    
+    V = n_vocab
+    N = sum(vocab_dict.values())
+
+    prob_dict=dict()
+    for key,value in vocab_dict.items():
+        #unigram for key
+   
+
+        prob = ( value + k ) / ( N+k*V)
+        
+        prob_dict[key]=prob
+    #start word probabilty is zero for unigram
+    prob_dict['<s>']=1.0
+    prob_dict=dict(sorted(prob_dict.items(),key=lambda x: (-x[1])))
+    return prob_dict
+
+def BigramProbAdd1(n_vocab, unigram_dict,bigram_dict,k):
+    
+    V = n_vocab
+    prob_dict=dict()
+    for key,value in bigram_dict.items():
+        #unigram for key
+        prob = ( bigram_dict[key] + k ) / (unigram_dict[key[0]] + k*V)
+        
+        prob_dict[key]=prob
+    #corrent teh probabilty for </s> <s>
+    prob_dict[('</s>', '<s>')]=1.0
+    return prob_dict
+
+
+
+
+
+
+def UnigramPerplexity(text,prob_dict,vocab_size):
+    prob=0
+    s=0
+    V=vocab_size
+    for token in text:
+ 
+        if(token=='<s>'):
+            s+=1
+        log_prob=math.log(prob_dict[token])
+       
+        #print(prob_dict[token])
+        prob+=(-log_prob)
+    #delete the start token
+    n=len(text)-s
+    prob=prob/n
+    
+    return math.exp(prob)
+#test the perplexity of devoplopment set
+def BigramPerplexity(text,prob_dict,unigram_dict,vocab_size,k):
+    prob=0
+    bigram = [tuple(text[i:i+2]) for i in range(len(text)-(1))]
+   # print(bigram)
+   
+    V=vocab_size
+    s=0
+
+    
+    for token in bigram:
+        try:
+           if(token==('</s>', '<s>')):
+                s+=1
+     
+           log_prob=math.log(prob_dict[token])
+            #print(prob_dict[token])
+        #if it's not in the dictionary, assign a probabily of 1/N+V   N is the count of uigram and V is to total vocalbuary
+        except:
+           
+            log_prob=math.log(k/(unigram_dict[token[0]]+V))
+            #print(1/(unigram_dict[token[0]]+V))
+    
+        prob+=-log_prob
+    n=len(text)-s-1
+    prob=prob/n
+    #print(s)
+    return math.exp(prob)
+def findacc(truth,preds): 
+     acc=np.sum(truth==preds)/len(truth)
+     return acc
+def processtest(file):
+    f=open(file,'r',encoding="utf8")
+    content=f.readlines()    
+    #content=[x.strip().strip('\n').strip('\t') for x in content]
+    content=[tokennize(x.strip()) for x in content]
+    return content
+
+
+
+#extract the key whose value is large than 1
+def getvocab(dict1,dict2):
+    vocab1=[i for i,x in dict1.items() if x>0]
+    vocab2=[i for i,x in dict2.items() if x>0]
+
+    vocab=list(set(vocab1)&set(vocab2))
+
+    t=list(set(vocab1)-set(vocab))
+    a=list(set(vocab2)-set(vocab))
+    print(len(t))
+   # print(t)
+   # print(len(a))
+    vocab1=[i for i in t if dict1[i]>=2]
+    print(len(vocab1))
+    vocab2=[i for i in a if dict2[i]>=2]
+    print(len(vocab2))
+    vocab=list(set(vocab)|set(vocab1)|set(vocab2))
+    
+    #print(len(vocab))
+    #print(len(vocab1))
+    #print(len(vocab2))
+    #print(vocab_size)
+    l1=len(vocab1)
+    l2=len(vocab2)
+    vocab1=[i for i in t if dict1[i]==1 ][:int(0.98*l1)]
+    vocab2=[i for i in a if dict2[i]==1 ][:int(0.98*l2)]
+    #print(len(vocab1))
+    #print(len(vocab2))
+    vocab=list(set(vocab)|set(vocab1)|set(vocab2))
+   # vocab_size=len(vocab)
+    print(len(vocab))
+    return vocab
+#merge two to be as our fixed vocab to estimate unkown words in the training corpus for two datasets
+
+import random
+
+def weighted_choice(choices):
+    #choice is set of the all the possible words given by a preceding sequence of words 
+    #for bigram that is all the possible words followed by a specfic word
+   if choices==[]:
+      return [None]
+   #sum all the count in the choices set
+   total = sum(w for c, w in choices)
+   
+   #gerate a random number in the range of (0, total_count)
+   r = random.uniform(0, total)
+   upto = 0
+   # iterate over all the choices of  words
+   for c, w in choices:
+      if upto + w > r:
+         #once the cumulative prob exceeds the generated count r, we return the word
+         #print(c)
+         return c
+      upto += w
+
+#method 'naive' means to always generate the highest probabilty word (the word has the highest count given its preceding word)
+#method 'weighted' means to generate diversified sentences based on a weighted distribution of ngram counts 
+#this function 
+def generateNGramSentence( start,word_dict_sorted,n):
+    sentence=list(start)
+    words=start
+    word=start[-1]
+    # for unigram model 
+    
+
+    #for other ngram model (n>=2)
+
+    while(1):
+       # if (method=='naive'):
+            #word=next((a[0][-1]  for a in word_dict_sorted if a[0][:n-1] ==words[-(n-1):]),'/s')     
+         #   word=next((a[-1]for a in word_dict_sorted.keys()  if a[:n-1] ==words[-(n-1):]),None)
+
+        if(n==1):
+            word=weighted_choice(list(word_dict_sorted.items()))[-1]
+            
+            #r=random.randint(0,len(word_dict_sorted.keys())-1)
+            #word=list(word_dict_sorted.keys())[r][0]
+        else:
+            choices=[(a,word_dict_sorted[a])   for a in word_dict_sorted if a[:n-1] ==words[-(n-1):]]
+            word=weighted_choice(choices)[-1]
+        if(n==1 and word=='<s>'):
+            continue
+        sentence.append(word)
+        #for unknown word we will not handled it here but will deal with it with smoothing 
+        if(word==None):
+           print("ngram not found")
+           return 
+       
+        if(word=='</s>'):
+           break
+        words=words+tuple([word])
+ 
+    if(sentence[-1]!='</s>'):
+        sentence.append("</s>")
+
+    return (" ".join(sentence))
+def generateword( start,word_dict_sorted,n):
+    sentence=list(start)
+    words=start
+    word=start[-1]
+    # for unigram model 
+    
+
+    #for other ngram model (n>=2)
+    while(1):
+        if(n==1):
+            word=weighted_choice(list(word_dict_sorted.items()))[-1]
+
+            #r=random.randint(0,len(word_dict_sorted.keys())-1)
+            #word=list(word_dict_sorted.keys())[r][0]
+        else:
+            choices=[(a,word_dict_sorted[a])   for a in word_dict_sorted if a[:n-1] ==words[-(n-1):]]
+            word=weighted_choice(choices)[-1]
+
+            sentence.append(word)
+            #for unknown word we will not handled it here but will deal with it with smoothing 
+
+
+        if(word=='</s>'or word=='<s>'):
+            continue
+        else:
+            break
+    return word
+
+def predict(a,b, t):
+    pred=[]
+    Id=[]
+    result=[]
+    for i,d in enumerate(test):
+        tokens=maptoken(dict1,d)
+        prediction=np.argmax([BigramPerplexity(tokens,bigram_trump,dict2,vocab_size,k),BigramPerplexity(tokens,bigram_obama,dict1,vocab_size,k)])
+        result.append((i,prediction))
+        pred.append(prediction)
+    return pred,result
+    
+
+def run(text1,text2):
+    tokens1=tokennize(text1)
+    tokens2=tokennize(text2)
+    #
+    dict1=wordcount(tokens1)
+    dict2=wordcount(tokens2)
+
+    vocab=getvocab(dict1,dict2)
+
+    dict1=addunkown(dict1,vocab)
+    dict2=addunkown(dict2,vocab)
+    tokens1=maptoken(dict1,tokens1)
+    tokens2=maptoken(dict2,tokens2)
+
+    #generate new bigram dicts
+    bigram_count1,bi_dict1,bigram_sorted_list1=generateNgram(tokens1,2)
+    bigram_count2,bi_dict2,bigram_sorted_list2=generateNgram(tokens2,2)
+    n_vocab=len(vocab)     
+    k=1
+    unigram_obama=UnigramProbAdd1(n_vocab,dict1,k) #
+    unigram_trump=UnigramProbAdd1(n_vocab,dict2,k)
+    bigram_obama=BigramProbAdd1(n_vocab,dict1,bi_dict1,k)
+    bigram_trump=BigramProbAdd1(n_vocab,dict2,bi_dict2,k)
+    
+    test_file="Assignment1_resources/test/test.txt"
+    test=processtest(test_file)
+    
+    #unigram perplexity
+    pred=[]
+    Id=[]
+    for i,d in enumerate(test):
+        tokens=maptoken(dict1,d)
+        prediction=np.argmax([UnigramPerplexity(tokens,unigram_trump,vocab_size),UnigramPerplexity(tokens,unigram_obama,vocab_size)])
+        pred.append((i,prediction))
+     
+    labels = ['Id','Prediction']
+    df = pd.DataFrame.from_records(pred, columns=labels)
+    df.to_csv("unigram_1.csv",index=False,header=True,sep=",")
+    print('done1')
+    
+    
+    #bigram perplexity
+    
+
+    Id=[]
+    pred=[]
+    for i,d in enumerate(test):
+        tokens=maptoken(dict1,d)
+        prediction=np.argmax([BigramPerplexity(tokens,bigram_trump,dict2,vocab_size,k),BigramPerplexity(tokens,bigram_obama,dict1,vocab_size,k)])
+        pred.append((i,prediction))
+      
+    labels = ['Id','Prediction']
+    df = pd.DataFrame.from_records(pred, columns=labels)
+    df.to_csv("bigram_1.csv",index=False,header=True,sep=",")
+    print('done2')
+    return 
+
+
+
+    #random sentence generation
+filename1="Assignment1_resources/train/obama.txt"
+filename2="Assignment1_resources/train/trump.txt"
+obama_tokens=preprocess(filename1)
+trump_tokens=preprocess(filename2)
+
+obama_unigram_count,obama_unigram_dict,obama_unigram_sorted_list=generateNgram(obama_tokens,1)
+trump_unigram_count,trump_unigram_dict,trump_unigram_sorted_list=generateNgram(trump_tokens,1)
+obama_bigram_count,obama_bigram_dict,obama_bigram_sorted_list=generateNgram(obama_tokens,2)
+trump_bigram_count,trump_bigram_dict,trump_bigram_sorted_list=generateNgram(trump_tokens,2)
+#build probabilty dictionary for generating sentences
+obama_unigram_prob_dict=dict([(i[0],i[1]/obama_unigram_count) for i in obama_unigram_sorted_list])
+trump_unigram_prob_dict=dict([(i[0],i[1]/trump_unigram_count) for i in trump_unigram_sorted_list])
+#build probabilty dictionary for generating sentences
+obama_bigram_prob_dict=dict([(i[0],i[1]/obama_unigram_dict[tuple([i[0][0]])])  for i in obama_bigram_sorted_list])
+trump_bigram_prob_dict=dict([(i[0],i[1]/trump_unigram_dict[tuple([i[0][0]])])  for i in trump_bigram_sorted_list])
+
+
+start="<s> we're going to"
+start=tuple(start.split(" "))
+start2='<s>' 
+start2=tuple(start2.split(" "))
+
+
+
+print("Unigram")
+print("seeded:")
+print("obama:")
+print(generateNGramSentence(start,obama_unigram_prob_dict,1))
+print("trump:")
+print(generateNGramSentence(start,trump_unigram_prob_dict,1))
+#testing sentence generaton without applying smoothing 
+#first is the unigram model
+#unseeded sentence generation
+print()
+print()
+print("unseeded:")
+#method='weighted'
+print("obama:")
+print(generateNGramSentence(start2,obama_unigram_prob_dict,1))
+print("trump:")
+print(generateNGramSentence(start2,trump_unigram_prob_dict,1))
+
+
+print("seeded:")
+print("obama:")
+print(generateNGramSentence(start,obama_bigram_prob_dict,2))
+print("trump:")
+print(generateNGramSentence(start,trump_bigram_prob_dict,2))
+print()
+print()
+print("unseeded:")
+print("obama:")
+print(generateNGramSentence(start2,obama_bigram_prob_dict,2))
+print("trump:")
+print(generateNGramSentence(start2,trump_bigram_prob_dict,2))
+
+
+#try the trigram model
+obama_trigram_count,obama_trigram_dict,obama_trigram_sorted_list=generateNgram(obama_tokens,3)
+trump_trigram_count,trump_trigram_dict,trump_trigram_sorted_list=generateNgram(trump_tokens,3)
+obama_trigram_prob_dict=dict([(i[0],i[1]/obama_bigram_dict[i[0][0:2]])for i in obama_trigram_sorted_list])
+trump_trigram_prob_dict=dict([(i[0],i[1]/trump_bigram_dict[i[0][0:2]])for i in trump_trigram_sorted_list])
+
+print("seeded:")
+print("obama:")
+print(generateNGramSentence(start,obama_trigram_prob_dict,3))
+print("trump:")
+print(generateNGramSentence(start,trump_trigram_prob_dict,3))
+print()
+print()
+print("unseeded:")
+#genrate a word using unigram
+word1_o=generateword(start2,obama_bigram_prob_dict,2)
+word2_t=generateword(start2,trump_bigram_prob_dict,2)
+start_o=start2+(word1_o,)
+start_t=start2+(word2_t,)
+
+
+print("obama:")
+print(generateNGramSentence(start_o,obama_trigram_prob_dict,3))
+print("trump:")
+print(generateNGramSentence(start_t,trump_trigram_prob_dict,3))
+
+
+#try the quadgram model
+obama_quadgram_count,obama_quadgram_dict,obama_quadgram_sorted_list=generateNgram(obama_tokens,4)
+trump_quadgram_count,trump_quadgram_dict,trump_quadgram_sorted_list=generateNgram(trump_tokens,4)
+obama_quadgram_prob_dict=dict([(i[0],i[1]/obama_trigram_dict[i[0][0:3]]) for i in obama_quadgram_sorted_list])
+trump_quadgram_prob_dict=dict([(i[0],i[1]/trump_trigram_dict[i[0][0:3]]) for i in trump_quadgram_sorted_list])
+
+print("seeded:")
+print("obama:")
+print(generateNGramSentence(start,obama_quadgram_prob_dict,4))
+print("trump:")
+print(generateNGramSentence(start,trump_quadgram_prob_dict,4))
+print()
+print()
+
+print("unseeded:")
+word1_o=generateword(start2,obama_bigram_prob_dict,2)
+word2_t=generateword(start2,trump_bigram_prob_dict,2)
+start_o=start2+(word1_o,)
+start_t=start2+(word2_t,)
+word2_o=generateword(start_o,obama_trigram_prob_dict,3)
+word2_t=generateword(start_t,obama_trigram_prob_dict,3)
+
+start_o=start_o+(word2_o,)
+start_t=start_t+(word2_t,)
+print("obama:")
+print(generateNGramSentence(start_o,obama_quadgram_prob_dict,4))
+print("trump:")
+print(generateNGramSentence(start_t,trump_quadgram_prob_dict,4))
+
+file1_trn="Assignment1_resources/train/obama.txt"
+file2_trn="Assignment1_resources/train/trump.txt"
+file1_dev="Assignment1_resources/development/obama.txt"
+file2_dev="Assignment1_resources/development/trump.txt"
+
+train1=loaddata(file1_trn)
+train2=loaddata(file2_trn)
+
+tokens1=tokennize(train1)
+tokens2=tokennize(train2)
+#
+dict1=wordcount(tokens1)
+dict2=wordcount(tokens2)
+
+vocab=getvocab(dict1,dict2)
+
+dict1=addunkown(dict1,vocab)
+dict2=addunkown(dict2,vocab)
+tokens1=maptoken(dict1,tokens1)
+tokens2=maptoken(dict2,tokens2)
+
+#generate new bigram dicts
+bigram_count1,bi_dict1,bigram_sorted_list1=generateNgram(tokens1,2)
+bigram_count2,bi_dict2,bigram_sorted_list2=generateNgram(tokens2,2)
+n_vocab=vocab_size=len(vocab)   
+
+
+
+for k in [0.1,0.2,0.5,1,2,3,4,5,6]:
+    unigram_obama=UnigramProbAdd1(n_vocab,dict1,k) #
+    unigram_trump=UnigramProbAdd1(n_vocab,dict2,k)
+
+    bigram_obama=BigramProbAdd1(n_vocab,dict1,bi_dict1,k)
+    bigram_trump=BigramProbAdd1(n_vocab,dict2,bi_dict2,k)
+
+
+    pred=[]
+    result=[]
+    Id=[]
+    file1_dev="Assignment1_resources/development/obama.txt"
+    file2_dev="Assignment1_resources/development/trump.txt"
+    dev1=processtest(file1_dev)
+    dev2=processtest(file2_dev)
+    acc_set=[]
+    x_dev=np.concatenate((dev1,dev2),axis=0)
+    y_dev=np.concatenate((np.zeros(100),np.ones(100)),axis=0)
+    y_dev=np.array(y_dev,dtype=int)
+    
+    for i,d in enumerate(x_dev):
+        tokens=maptoken(dict1,d)
+        prediction=np.argmax([BigramPerplexity(tokens,bigram_trump,dict2,vocab_size,k),BigramPerplexity(tokens,bigram_obama,dict1,vocab_size,k)])
+        result.append((i,prediction))
+        pred.append(prediction)
+    acc=findacc(y_dev,pred)
+    acc1=findacc(y_dev[:100],pred[:100])
+    acc2=findacc(y_dev[100:200],pred[100:200])
+    print("k=%f:"%(k)+str(acc)+" "+str(acc1)+ " "+str(acc2))
+    acc_set.append(acc)
+    
+print("done")
+
+
+#evlutae correctness of perplexity on dev sets
+k=1
+unigram_obama=UnigramProbAdd1(n_vocab,dict1,k) #
+unigram_trump=UnigramProbAdd1(n_vocab,dict2,k)
+
+bigram_obama=BigramProbAdd1(n_vocab,dict1,bi_dict1,k)
+bigram_trump=BigramProbAdd1(n_vocab,dict2,bi_dict2,k)
+
+dev_tokens1=preprocess(file1_dev)
+dev_tokens2=preprocess(file2_dev)
+dev1=maptoken(dict1,dev_tokens1)
+dev2=maptoken(dict2,dev_tokens2)
+print("calculate perplexity")
+print("Unigram_obama")
+print(UnigramPerplexity(dev1,unigram_obama,n_vocab))
+print(UnigramPerplexity(dev2,unigram_obama,n_vocab))
+
+print("Unigram_trump")
+print(UnigramPerplexity(dev1,unigram_trump,n_vocab))
+print(UnigramPerplexity(dev2,unigram_trump,n_vocab))
+print("Bigram_obama")
+print(BigramPerplexity(dev1,bigram_obama,dict1,n_vocab,1))
+print(BigramPerplexity(dev2,bigram_obama,dict2,n_vocab,1))
+
+print("Bigram_trump")
+print(BigramPerplexity(dev1,bigram_trump,dict1,n_vocab,1))
+print(BigramPerplexity(dev2,bigram_trump,dict2,n_vocab,1))
+
+
+
+print("accuracy with k being 1")
+for k in [1]:
+    unigram_obama=UnigramProbAdd1(n_vocab,dict1,k) #
+    unigram_trump=UnigramProbAdd1(n_vocab,dict2,k)
+
+    bigram_obama=BigramProbAdd1(n_vocab,dict1,bi_dict1,k)
+    bigram_trump=BigramProbAdd1(n_vocab,dict2,bi_dict2,k)
+
+
+    pred=[]
+    result=[]
+    Id=[]
+    file1_dev="Assignment1_resources/development/obama.txt"
+    file2_dev="Assignment1_resources/development/trump.txt"
+    dev1=processtest(file1_dev)
+    dev2=processtest(file2_dev)
+    x_dev=np.concatenate((dev1,dev2),axis=0)
+    y_dev=np.concatenate((np.zeros(100),np.ones(100)),axis=0)
+    y_dev=np.array(y_dev,dtype=int)
+    
+    for i,d in enumerate(x_dev):
+        tokens=maptoken(dict1,d)
+        t=BigramPerplexity(tokens,bigram_trump,dict2,vocab_size,k)
+        o=BigramPerplexity(tokens,bigram_obama,dict1,vocab_size,k)
+        prediction=np.argmax([t,o])
+        result.append((i,prediction))
+        pred.append(prediction)
+ 
+    acc=findacc(y_dev,pred)
+    acc1=findacc(y_dev[:100],pred[:100])
+    acc2=findacc(y_dev[100:200],pred[100:200])
+    print("bigtram k=%f:"%(k)+str(acc)+" "+str(acc1)+ " "+str(acc2))
+    
+    pred=[]
+
+    for i,d in enumerate(x_dev):
+        tokens=maptoken(dict1,d)
+        t=UnigramPerplexity(tokens,unigram_trump,vocab_size)
+        o=UnigramPerplexity(tokens,unigram_obama,vocab_size)
+        prediction=np.argmax([t,o])
+        result.append((i,prediction))
+        pred.append(prediction)
+ 
+    acc=findacc(y_dev,pred)
+    acc1=findacc(y_dev[:100],pred[:100])
+    acc2=findacc(y_dev[100:200],pred[100:200])
+    
+    print("unigram: k=%f:"%(k)+str(acc)+" "+str(acc1)+ " "+str(acc2))
+
+
+#now we know the best k=1
+#combine the train and dev set
+#run the prediction model
+
+file1_trn="Assignment1_resources/train/obama.txt"
+file2_trn="Assignment1_resources/train/trump.txt"
+file1_dev="Assignment1_resources/development/obama.txt"
+file2_dev="Assignment1_resources/development/trump.txt"
+
+train1=loaddata(file1_trn)+" "+loaddata(file1_dev)
+train2=loaddata(file2_trn)+" "+loaddata(file2_dev)
+
+run(train1,train2)
+print("predictions are recorded")

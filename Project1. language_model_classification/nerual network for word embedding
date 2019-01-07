@@ -1,0 +1,273 @@
+import sys
+import os
+import numpy as np
+import re
+from num2words import num2words
+from nltk import word_tokenize
+import re
+import pandas as pd
+import math
+from nltk import word_tokenize
+from nltk.stem.porter import PorterStemmer
+from nltk.stem import SnowballStemmer
+from nltk.corpus import stopwords
+import string
+def preprocess(content):
+ 
+    #re-assemble words like there ' s , they 've, don't,can't into a consitent form 
+    #content=re.sub(r"[^a-zA-Z1-9]",r" ",content)
+    content= re.sub(r" \’ ",r"'",content)
+    content= re.sub(r" \'",r"'",content)
+    content= re.sub(r"\' ",r"'",content)
+    content=re.sub(r" n\’t",r"n't",content)
+    content=re.sub(r"''",r" ",content)
+    content=re.sub(r"'s",r" is",content)
+    content=re.sub(r"'re",r" are",content)
+    content=re.sub(r"'ve",r" have",content)
+    #content=re.sub(r"n't",r"  not",content)
+    content=re.sub(r"i'm",r"i am",content)
+    content=re.sub(r"'ll",r" will",content)
+    content=re.sub(r"'d",r" would",content)
+    content=re.sub(r"[\-\—\…]",r" ",content)  
+    
+    content=re.sub(r"\.",r" . ",content)
+    content=re.sub(r"\'",r" ' ",content)
+    content=re.sub(r"\,",r" , ",content)
+    
+    #replace puntuation into period
+    #content=re.sub(r"[/!/?]",r' . ',content)
+    
+    def is_number(text):
+        try:
+            float(text)
+            return True
+        except ValueError:
+            return False
+    def conert_number2string(text):
+
+        t=text.split(" ")
+        c=[ num2words((float)(a)) if is_number(a) else a for a in t ]
+        return " ".join(c)
+    #replace number into word characters
+    content=conert_number2string(content)
+    content=re.sub(r"\.",r" . ",content)
+    content=re.sub(r"\'",r" ' ",content)
+    content=re.sub(r"\,",r" , ",content)
+    
+    #tokenization with re by space
+    tokens = word_tokenize(content)
+
+    tokens = [w.lower() for w in tokens]
+    re_punc = re.compile('[%s]' % re.escape(string.punctuation))
+    tokens = [re_punc.sub('', w) for w in tokens]
+    tokens = [word for word in  tokens if word.isalpha()]
+    stop_words = set(stopwords.words('english'))
+    tokens = [w for w in tokens if not w in stop_words]
+    #porter = SnowballStemmer('english')
+    #tokens= [porter.stem(word) for word in tokens]
+    tokens= list(filter(None, tokens )) # Remove empty string
+    return tokens
+
+file1_trn="Assignment1_resources/train/obama.txt"
+file2_trn="Assignment1_resources/train/trump.txt"
+file1_dev="Assignment1_resources/development/obama.txt"
+file2_dev="Assignment1_resources/development/trump.txt"
+test_file="Assignment1_resources/test/test.txt"
+
+
+f=open(file1_trn,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content1=[ preprocess(line) for line in content]
+
+
+
+f=open(file2_trn,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content2=[ preprocess(line) for line in content]
+
+x_train=content1+content2
+
+
+f=open(file1_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content1=[ preprocess(line) for line in content]
+
+
+f=open(file2_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content2=[ preprocess(line) for line in content]
+
+x_text=content1+content2
+
+
+f=open(file1_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content1=[ preprocess(line) for line in content]
+
+
+
+f=open(file2_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content2=[ preprocess(line) for line in content]
+
+x_text=content1+content2
+
+
+
+f=open(file1_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content1=[ preprocess(line) for line in content]
+
+
+
+f=open(file2_dev,'r',encoding="utf8")
+content=f.readlines()
+content=[x.strip().strip('\n').strip('\t') for x in content]
+content2=[ preprocess(line) for line in content]
+
+x_text=content1+content2
+
+
+max_length = max([len(s) for s in x_train])
+print(max_length)
+
+import torch
+def _calculate_fan_in_and_fan_out(tensor):
+    if tensor.ndimension() < 2:
+        raise ValueError("fan in and fan out can not be computed for tensor of size ", tensor.size())
+
+    if tensor.ndimension() == 2:  # Linear
+        fan_in = tensor.size(1)
+        fan_out = tensor.size(0)
+    else:
+        num_input_fmaps = tensor.size(1)
+        num_output_fmaps = tensor.size(0)
+        receptive_field_size = np.prod(tensor.numpy().shape[2:])
+        fan_in = num_input_fmaps * receptive_field_size
+        fan_out = num_output_fmaps * receptive_field_size
+
+    return fan_in, fan_out
+
+def xavier_normal(tensor, gain=1):
+    """Fills the input Tensor or Variable with values according to the method described in "Understanding the difficulty of training
+       deep feedforward neural networks" - Glorot, X. and Bengio, Y., using a normal distribution.
+       The resulting tensor will have values sampled from normal distribution with mean=0 and
+       std = gain * sqrt(2/(fan_in + fan_out))
+    Args:
+        tensor: a n-dimension torch.Tensor
+        gain: an optional scaling factor to be applied
+    Examples:
+        w = torch.Tensor(3, 5)
+        xavier_normal(w, gain=np.sqrt(2.0))
+    """
+
+    fan_in, fan_out = _calculate_fan_in_and_fan_out(tensor)
+    std = gain * np.sqrt(2.0 / (fan_in + fan_out))
+    return tensor.normal_(0, std)
+
+
+initW = xavier_normal(torch.randn([vocab_size+1, 300])).numpy()
+for i,v in enumerate(vocab):
+    try:
+        initW[i+1]=embed[v]
+    except:
+        continue
+embededing_matrix=initW
+
+
+vocab_dict={}
+for i,v in enumerate(vocab):
+    vocab_dict[v]=i+1
+len(vocab_dict)
+
+def fit_sequence(x,vocab_dict):
+    result=[]
+    for seq in x:
+        
+        t=[]
+        for word in seq:
+              
+              try:
+                    a=vocab_dict[word]
+              #oov word append the list index 
+              except:
+                    a=0
+              t.append(a)
+        result.append(t)
+    return result
+sequences=fit_sequence(x_train,vocab_dict)
+
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+
+data = pad_sequences(sequences, maxlen=90)
+
+from sklearn.model_selection import train_test_split
+random_seed=3
+x_trn, x_val, y_trn,y_val = train_test_split(data,y_train,test_size = 0, random_state=random_seed)  
+
+from keras.models import Sequential
+from keras.layers import Dense, Flatten, LSTM, Conv1D, MaxPooling1D, Dropout, Activation
+from keras.layers.embeddings import Embedding
+from keras.callbacks import ReduceLROnPlateau
+from keras.regularizers import l2
+from keras.layers import TimeDistributed
+from keras.layers import Bidirectional
+
+model = Sequential()
+model.add(Embedding(vocab_size+1, 300, input_length=90, weights=[embededing_matrix], trainable=False))
+model.add(Dropout(0.2))
+model.add(Conv1D(64, 3, activation='relu'))
+model.add(MaxPooling1D(pool_size=4))
+model.add(Bidirectional(LSTM(128)))
+model.add(Dropout(0.2))
+model.add(Dense(2, activation='softmax'))
+
+
+#model.add(Dense(2, activation='softmax',W_regularizer=l2(0.005)))
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+
+learning_rate_reduction = ReduceLROnPlateau(monitor='acc', 
+                                            patience=3, 
+                                            verbose=1, 
+                                            factor=0.5, 
+                                            min_lr=0.00001)
+
+epochs = 50  
+
+#model.fit(x_trn,y_trn, batch_size=size, epochs = epochs, validation_data=(x_tst,y_tst), shuffle=True,
+                           #   verbose = 1, callbacks=[learning_rate_reduction])
+model.fit(x_trn,y_trn, batch_size=1, epochs = epochs, shuffle=True,validation_split=0.3,verbose = 1,callbacks=[learning_rate_reduction])
+print("done")
+
+
+pred_x=pad_sequences(fit_sequence(x_test,vocab_dict), maxlen=90)
+predict=model.predict(pred_x,batch_size=1)
+predict=np.argmax(predict,axis = 1) 
+true=np.argmax(y_test,axis = 1) 
+def findacc(truth,preds): 
+     acc=np.sum(truth==preds)/len(truth)
+     return acc
+findacc(true,predict)
+#（validation accu:0.96）
+
+
+pred=[]
+
+for i,d in enumerate(predict):
+ 
+    pred.append((i,d))
+    
+labels = ['Id','Prediction']
+df = pd.DataFrame.from_records(pred, columns=labels)
+df.to_csv("ML_pred2.csv",index=False,header=True,sep=",")
+print(pred)
+print('done')
