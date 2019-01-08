@@ -2,13 +2,13 @@
 
 Four NLP projects in the cornell course CS4740.
 
-* [Project 1: Classification of Obama and Trump Speech data using Language models]
+* <b>Project 1: Classification of Obama and Trump Speech data using Language models</b>
 
-* [Project 2: Named Entity Recognition with HMMs and MEMMs]
+* <b>Project 2: Named Entity Recognition with HMMs and MEMMs</b>
 
-* [Project 3: Simply Neural Models in NLP performing on some Toy Tasks ]
+* <b>Project 3: Simply Neural Models in NLP performing on some Toy Tasks </b>
 
-* [Project 4: Squad 2.0 Dataset: Machine Reading Comprehension]
+* <b>Project 4: Squad 2.0 Dataset: Machine Reading Comprehension</b>
 
 
 # Project1: Classification of Obama and Trump Speech data using Language models
