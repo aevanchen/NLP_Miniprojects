@@ -58,12 +58,11 @@ The unigram model and bigram models are implemented with add-1 smoothing. The va
 |:--------------:|:-----------:|:-----------:|:-------------:|
 |Unigram model |	0.965 |	0.92 |	0.935| 
 Bigram model 	|0.98 	|0.95 |	0.965 |
-<p align="center">
-  <b>Validation accuracy for unigram and bigram models</b><br>
-</p>
+Validation accuracy for unigram and bigram models</b>
+
 
 The validation accuracy in the dev set for different Ks is shown the table below 
-<p align="center">
+
 
 |K 	|accuracy of Obama dev set| 	accuracy of Trump dev set| 	overall accuracy| 
 |:--------------:|:-----------:|:-----------:|:-------------:|
@@ -72,9 +71,8 @@ The validation accuracy in the dev set for different Ks is shown the table below
 |3 	|0.93| 	0.92| 	0.925| 
 |4 	|0.86| 	0.92| 	0.89| 
 |5 	|0.73| 	0.91| 	0.82| 
+<b>Validation accuracy for different k in Laplacian smoothing over the dev set</b>
 
-  <b>Validation accuracy for different k in Laplacian smoothing over the dev set</b><br>
-</p>
 
 As the k increases, the accuracy keeps decreasing. Thus, the best k is set as 1. For curiosity, 
 we picked k as numbers smaller than 1 when calculating the probability and surprisingly get better result.
@@ -110,23 +108,20 @@ Hidden Markov Model is used for named entity BIO tagging as a sequence model. It
 * MEMM
 HMM cannot incorporate more context or long distance features. It is essentially a logistic regression classifier, merely by designing a list of customized features, it is able to do well on tagging task. It models the distribution of predicted label (tag in this case) given the data (features).
 The involved features including:
-  1. <b>Is Capitalized.</b> Most of the named entities are proper nouns like name of person, organization,
-  location which is usually capitalized Eg. America, Barack, W.H.O.
-  2. Is Start Of Sentence Previous feature looks if word is capitalized but we want to keep track of its
-  position as well. Because, start of sentence is also capitalized. Ex. The game
-  3. Is Number. Numbers are also named entity which will be part of MISC category in our case
-  4. has Hyphen Some
-  5. Is Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is
-  more likely to be named entity then compared to other part of speech
-  6. Is Proper Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is more likely to be named entity then compared to other part of speech
-  7. Follows a Determiner. Nouns usually follow Determiner. Ex. The United States of America
-  8. Follows an Adjective. Nouns are mostly seen in sequences like Determiner-Adjective-Noun
-  9. Most likely NER Tag.
-  10. Previous NER Tag as per prediction.
-  11. Previous of Previous NER Tag.
-  12. Normalized Word Embedding of Current Word (size: 300) [Continuous Feature]
-  13. Normalized Word Embedding of Previous Word (size: 300) [Continuous Feature]
-  14. Normalized Word Embedding of Next Word (size: 300) [Continuous Feature]
+  1. <b>Is Capitalized.</b> Most of the named entities are proper nouns like name of person, organization, location which is usually capitalized Eg. America, Barack, W.H.O.
+  2. <b>Is Start Of Sentence.</b> Previous feature looks if word is capitalized but we want to keep track of its position as well. Because, start of sentence is also capitalized. Ex. The game
+  3. <b>Is Number.</b> Numbers are also named entity which will be part of MISC category in our case
+  4. <b>has Hyphen Some. </b>
+  5. <b>Is Noun (POS Tag).</b> We want to know is the part of speech associated with the word is noun as it is more likely to be named entity then compared to other part of speech
+  6. <b>Is Proper Noun (POS Tag).</b> We want to know is the part of speech associated with the word is noun as it is more likely to be named entity then compared to other part of speech
+  7. <b>Follows a Determiner.</b> Nouns usually follow Determiner. Ex. The United States of America
+  8. <b>Follows an Adjective.</b> Nouns are mostly seen in sequences like Determiner-Adjective-Noun
+  9. <b>Most likely NER Tag.</b>
+  10. <b>Previous NER Tag as per prediction.</b>
+  11. <b>Previous of Previous NER Tag.</b>
+  12. <b>Normalized Word Embedding of Current Word (size: 300) [Continuous Feature]</b>
+  13. <b>Normalized Word Embedding of Previous Word (size: 300) [Continuous Feature]</b>
+  14. <b>Normalized Word Embedding of Next Word (size: 300) [Continuous Feature]</b>
 
 ## Result
 
@@ -136,17 +131,14 @@ The involved features including:
 |Baseline Model -Logistic Regression| 0.594 |0.780 |0.675|
 |HMM  |0.710| 0.744| 0.727|
 |MEMM |0.866| 0.822| 0.953|
-<p align="center">
-  <b>Model Performance</b><br>
-</p>
+<b>Model Performance</b><br>
 
 |Model / Category |ORG |MISC |PER |LOC|
 |:--------------:|:-----------:|:-----------:|:-------------:|:-------------:|
 |HMM |0.68| 0.64| 0.64 |0.84|
 |MEMM |0.70 |0.73 |0.79 |0.82|
-<p align="center">
-  <b>MM and MEMM prediction</b><br>
-</p>
+<b>MM and MEMM prediction</b>
+
 
 According to the table, we can see that, when we use very few features, HMM outperforms MEMM.However, the performance of MEMM improves as more and more features are added to the model. This makes
 sense because the advantage for MEMM over HMM is that it can use arbitrary features and encode as many features as possible. When there is only very little extra information about the context, MEMM loses its advantage. But when there are a lot of relevant features, MEMM eventually performs well because it has much more context information than HMM. As to the run time, HMM is faster. Features with higher weight are more important for prediction. For MEMM Hand Tuned features, We observed that continuous features for part of speech had huge impact on our development accuracy which is valid as nouns are
@@ -183,18 +175,15 @@ Runtime (n is the sequence length)
 |Copy	|0.8275	|0.5216|
 |Reverse|	0.9338|0.9457|
 |Sort	|0.4227|	0.4431|
-<p align="center">
-  <b>Test Accuracy for models without attention on given test set with and without teacher forcing</b><br>
-</p>
+<b>Test Accuracy for models without attention on given test set with and without teacher forcing</b>
 
 |Task	|Without attention	|With Additive Attention|With Multiplicative Attention|
 |:--------------:|:-----------:|:-----------:|:-----------:|
 |Copy	|0.8273	|0.9915 |1.0|
 |Reverse|	0.9337	|0.9373 |0.9373|
 |Sort	|0.4227	|0.434	|0.4484|
-<p align="center">
-  <b>Test Accuracy results for models with and without attention on given test set </b><br>
-</p>
+<b>Test Accuracy results for models with and without attention on given test set </b>
+
 
 ●	When we extended the sequence length from 10 to 20, the text accuracy drops from 1 to 0.75. It is proved that the sequence model does not perform well on long sequence. For a relative large vocabulary and a longer input sequence to model, it is seen that the attention performs a lot better than without. It is because it can encode more ‘focused’ dependency on the far away input vectors to learn and represent their relationship in the learning phase. We can see similar behavior in Experiment 2 and 3 due to same reason.
 ●	The multiplicative attention outperforms the additive attention. It has been studied that the additive is better theoretically for high dimension inputs like word embedding. One of reasons to observe a worse performance of additive attention might be that we only trained 5 epochs for the model. Since there are 3 weight matrices to optimize, the training time to the optimum solution will take longer time.
@@ -241,9 +230,7 @@ Final feature vector:
 * Model 5:Using Bidirectional GRUs with Additive Attention
 Description: In this approach, we used bidirectional GRUs as encoders to extract the vector representation of context and question and further added GRUs, additive attention and dense layers for the classification task. As we wanted to use mini-batch training , we also constrained the context to 600 words and question to 30 words by using padded sequences.
 ![IAMGE3](img/model5.png)
-<p align="center">
-  <b>Architecture of MODEL 5 </b><br>
-</p>
+<b>Architecture of MODEL 5 </b>
 
 ## Result:
 
@@ -254,9 +241,8 @@ Description: In this approach, we used bidirectional GRUs as encoders to extract
 |3| 0.552 |0.582| 0.548 |0.564 |
 |4|0.612 |0.605 |0.614| 0.609|
 |5|0.636 |0.667 |0.682 |0.652 |
-<p align="center">
-  <b>Quantitative Results and Analysis for all models </b><br>
-</p>
+<b>Quantitative Results and Analysis for all models </b>
+
 
 * Baseline model zip file includes:
 1.Model 1 is InferSent with Semantic Similarity. You can run MODEL2.ipynb for model 1.
