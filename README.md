@@ -58,6 +58,7 @@ The unigram model and bigram models are implemented with add-1 smoothing. The va
 |:--------------:|:-----------:|:-----------:|:-------------:|
 |Unigram model |	0.965 |	0.92 |	0.935| 
 Bigram model 	|0.98 	|0.95 |	0.965 |
+
 Validation accuracy for unigram and bigram models</b>
 
 
@@ -71,6 +72,7 @@ The validation accuracy in the dev set for different Ks is shown the table below
 |3 	|0.93| 	0.92| 	0.925| 
 |4 	|0.86| 	0.92| 	0.89| 
 |5 	|0.73| 	0.91| 	0.82| 
+
 <b>Validation accuracy for different k in Laplacian smoothing over the dev set</b>
 
 
@@ -83,9 +85,8 @@ we picked k as numbers smaller than 1 when calculating the probability and surpr
 |0.2 |	1 |	0.94 |	0.97| 
 |0.5| 	0.99| 	0.94| 	0.965| 
 
-<p align="center">
-  <b>Validation accuracy for decimal numbers of k in Laplacian smoothing over the dev set</b><br>
-</p>
+<b>Validation accuracy for decimal numbers of k in Laplacian smoothing over the dev set</b><br>
+
 
 Improved accuracies using decimal numbers of k (<1) suggests that the unseen bigram probability should be lower than the probability achieved by add-1 smoothing. A decimal number of K will result in higher probability of seen bigram and lower probability of unseen bigram. It reflects that some of the unseen bigram combination is highly unlikely and should not be smoothed to have 1 count same as others. Therefore, considering add-k smoothing, even if k=1 is best of choice yet is still limited in this regard. This finding also encouraged us to use a more advanced smoothing method.
 
@@ -131,12 +132,14 @@ The involved features including:
 |Baseline Model -Logistic Regression| 0.594 |0.780 |0.675|
 |HMM  |0.710| 0.744| 0.727|
 |MEMM |0.866| 0.822| 0.953|
+
 <b>Model Performance</b><br>
 
 |Model / Category |ORG |MISC |PER |LOC|
 |:--------------:|:-----------:|:-----------:|:-------------:|:-------------:|
 |HMM |0.68| 0.64| 0.64 |0.84|
 |MEMM |0.70 |0.73 |0.79 |0.82|
+
 <b>MM and MEMM prediction</b>
 
 
@@ -175,6 +178,7 @@ Runtime (n is the sequence length)
 |Copy	|0.8275	|0.5216|
 |Reverse|	0.9338|0.9457|
 |Sort	|0.4227|	0.4431|
+
 <b>Test Accuracy for models without attention on given test set with and without teacher forcing</b>
 
 |Task	|Without attention	|With Additive Attention|With Multiplicative Attention|
@@ -182,6 +186,7 @@ Runtime (n is the sequence length)
 |Copy	|0.8273	|0.9915 |1.0|
 |Reverse|	0.9337	|0.9373 |0.9373|
 |Sort	|0.4227	|0.434	|0.4484|
+
 <b>Test Accuracy results for models with and without attention on given test set </b>
 
 
@@ -230,6 +235,7 @@ Final feature vector:
 * Model 5:Using Bidirectional GRUs with Additive Attention
 Description: In this approach, we used bidirectional GRUs as encoders to extract the vector representation of context and question and further added GRUs, additive attention and dense layers for the classification task. As we wanted to use mini-batch training , we also constrained the context to 600 words and question to 30 words by using padded sequences.
 ![IAMGE3](img/model5.png)
+
 <b>Architecture of MODEL 5 </b>
 
 ## Result:
@@ -241,6 +247,7 @@ Description: In this approach, we used bidirectional GRUs as encoders to extract
 |3| 0.552 |0.582| 0.548 |0.564 |
 |4|0.612 |0.605 |0.614| 0.609|
 |5|0.636 |0.667 |0.682 |0.652 |
+
 <b>Quantitative Results and Analysis for all models </b>
 
 
