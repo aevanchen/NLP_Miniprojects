@@ -63,6 +63,7 @@ Bigram model 	|0.98 	|0.95 |	0.965 |
 </p>
 
 The validation accuracy in the dev set for different Ks is shown the table below 
+<p align="center">
 
 |K 	|accuracy of Obama dev set| 	accuracy of Trump dev set| 	overall accuracy| 
 |:--------------:|:-----------:|:-----------:|:-------------:|
@@ -71,7 +72,7 @@ The validation accuracy in the dev set for different Ks is shown the table below
 |3 	|0.93| 	0.92| 	0.925| 
 |4 	|0.86| 	0.92| 	0.89| 
 |5 	|0.73| 	0.91| 	0.82| 
-<p align="center">
+
   <b>Validation accuracy for different k in Laplacian smoothing over the dev set</b><br>
 </p>
 
@@ -109,23 +110,23 @@ Hidden Markov Model is used for named entity BIO tagging as a sequence model. It
 * MEMM
 HMM cannot incorporate more context or long distance features. It is essentially a logistic regression classifier, merely by designing a list of customized features, it is able to do well on tagging task. It models the distribution of predicted label (tag in this case) given the data (features).
 The involved features including:
-1. Is Capitalized. Most of the named entities are proper nouns like name of person, organization,
-location which is usually capitalized Eg. America, Barack, W.H.O.
-2. Is Start Of Sentence Previous feature looks if word is capitalized but we want to keep track of its
-position as well. Because, start of sentence is also capitalized. Ex. The game
-3. Is Number. Numbers are also named entity which will be part of MISC category in our case
-4. has Hyphen Some
-5. Is Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is
-more likely to be named entity then compared to other part of speech
-6. Is Proper Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is more likely to be named entity then compared to other part of speech
-7. Follows a Determiner. Nouns usually follow Determiner. Ex. The United States of America
-8. Follows an Adjective. Nouns are mostly seen in sequences like Determiner-Adjective-Noun
-9. Most likely NER Tag.
-10. Previous NER Tag as per prediction.
-11. Previous of Previous NER Tag.
-12. Normalized Word Embedding of Current Word (size: 300) [Continuous Feature]
-13. Normalized Word Embedding of Previous Word (size: 300) [Continuous Feature]
-14. Normalized Word Embedding of Next Word (size: 300) [Continuous Feature]
+  1. <b>Is Capitalized.</b> Most of the named entities are proper nouns like name of person, organization,
+  location which is usually capitalized Eg. America, Barack, W.H.O.
+  2. Is Start Of Sentence Previous feature looks if word is capitalized but we want to keep track of its
+  position as well. Because, start of sentence is also capitalized. Ex. The game
+  3. Is Number. Numbers are also named entity which will be part of MISC category in our case
+  4. has Hyphen Some
+  5. Is Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is
+  more likely to be named entity then compared to other part of speech
+  6. Is Proper Noun (POS Tag). We want to know is the part of speech associated with the word is noun as it is more likely to be named entity then compared to other part of speech
+  7. Follows a Determiner. Nouns usually follow Determiner. Ex. The United States of America
+  8. Follows an Adjective. Nouns are mostly seen in sequences like Determiner-Adjective-Noun
+  9. Most likely NER Tag.
+  10. Previous NER Tag as per prediction.
+  11. Previous of Previous NER Tag.
+  12. Normalized Word Embedding of Current Word (size: 300) [Continuous Feature]
+  13. Normalized Word Embedding of Previous Word (size: 300) [Continuous Feature]
+  14. Normalized Word Embedding of Next Word (size: 300) [Continuous Feature]
 
 ## Result
 
